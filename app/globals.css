@@ -451,3 +451,104 @@ table.cal td.today .dn{color:var(--cyan-2);font-weight:700}
   table.cal{font-size:.8rem}
   .ev{font-size:.64rem}
 }
+
+
+/* ============================================================
+   LOGIN — split-screen (tela cheia, sem sidebar/topbar)
+   ============================================================ */
+
+.login-split {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--fundo, #05070E);
+}
+
+/* -------- lado da marca -------- */
+.login-brand {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 56px;
+  background: linear-gradient(135deg, #0A1230 0%, #0d1b4a 55%, #123a7a 100%);
+}
+
+.lb-shapes { position: absolute; inset: 0; pointer-events: none; }
+
+.lb-circle, .lb-ring {
+  position: absolute;
+  border-radius: 50%;
+  opacity: .5;
+}
+.lb-circle {
+  background: linear-gradient(135deg, #54E3FB, #2E77F0);
+}
+.lb-ring { border: 2px solid #54E3FB44; }
+
+.lb-circle.c1 { width: 300px; height: 300px; top: -80px; right: -60px; opacity: .18; }
+.lb-circle.c2 { width: 160px; height: 160px; bottom: 40px; left: -40px; opacity: .22; }
+.lb-circle.c3 { width: 90px;  height: 90px;  top: 45%; left: 30%; opacity: .30; }
+.lb-ring.r1   { width: 380px; height: 380px; bottom: -140px; right: 10%; }
+.lb-ring.r2   { width: 220px; height: 220px; top: 8%; left: 12%; }
+
+.lb-content { position: relative; z-index: 1; color: #fff; }
+
+.lb-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+.lb-logo .mark { width: 44px; height: 44px; }
+.lb-word { font-family: var(--fonte-display); font-weight: 800; letter-spacing: 1px; font-size: 1.4rem; }
+.lb-tag { font-size: .65rem; margin-left: 4px; color: #54E3FB; letter-spacing: 2px; vertical-align: super; }
+
+.lb-title {
+  font-family: var(--fonte-display);
+  font-weight: 800;
+  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+  line-height: 1.15;
+  max-width: 12ch;
+}
+.lb-accent {
+  background: linear-gradient(90deg, #54E3FB, #2E77F0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* -------- lado do formulário -------- */
+.login-form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.login-card { width: 100%; max-width: 380px; }
+
+.login-mobilebrand { display: none; align-items: center; gap: 10px; margin-bottom: 28px; }
+.login-mobilebrand .mark { width: 36px; height: 36px; }
+
+.login-h1 { font-family: var(--fonte-display); font-size: 1.9rem; margin-bottom: 6px; }
+.login-sub { color: var(--muted); margin-bottom: 28px; }
+
+.login-actions { display: flex; gap: 12px; margin-top: 8px; }
+.login-btn { flex: 1; justify-content: center; padding: 13px; }
+.login-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.login-hint { color: var(--muted); font-size: .8rem; margin-top: 14px; text-align: center; }
+
+/* -------- responsivo: só o formulário no celular -------- */
+@media (max-width: 860px) {
+  .login-split { grid-template-columns: 1fr; }
+  .login-brand { display: none; }
+  .login-mobilebrand { display: flex; }
+}
+
+/* ============================================================
+   Animação de entrada no sistema (fade suave)
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .app { animation: fade-entrada .5s ease both; }
+}
+@keyframes fade-entrada {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

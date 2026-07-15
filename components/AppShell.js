@@ -81,6 +81,11 @@ export default function AppShell({ children }) {
 
   const isActive = (href) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
+  // Login vive em tela cheia: sem sidebar, sem topbar. Só o conteúdo.
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <a className="skip" href="#main">Pular para o conteúdo</a>
