@@ -18,7 +18,7 @@ export async function GET(req) {
 
   const res = NextResponse.redirect(urlDeLogin({ redirectUri, state }));
   res.cookies.set('meta_state', state, {
-    httpOnly: true, secure: false, sameSite: 'lax', path: '/', maxAge: 600,
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 600,
   });
   return res;
 }
