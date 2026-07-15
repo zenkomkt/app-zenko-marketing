@@ -1,23 +1,43 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
-import { IconInstagram, IconFacebook, IconTikTok } from '@/components/Icons';
+import { IconInstagram, IconFacebook } from '@/components/Icons';
 
-/* Fase 2: virá do back-end (tabela de contas + tokens guardados com segurança). */
-const CONECTADAS = [
-  { sigla: 'ZM', nome: '@zenko.mkt', rede: 'Instagram · conta profissional', estado: 'ok', rotulo: 'Conectada', acao: 'Gerenciar' },
-  { sigla: 'AU', nome: '@cliente.aurora', rede: 'Instagram · conta profissional', estado: 'ok', rotulo: 'Conectada', acao: 'Gerenciar' },
-  { sigla: 'ZM', nome: 'Zenko MKT', rede: 'TikTok', estado: 'warn', rotulo: 'Reautenticar', acao: 'Reconectar' },
-];
+/**
+ * Contas sociais. Lê da view contas_visiveis (via /api/contas), que não tem a
+ * coluna do token. Quem lê token é só o back-end com a service_role.
+ *
+ * TikTok saiu do escopo: as diretrizes do TikTok excluem ferramentas de uso
+ * interno. Instagram e Facebook funcionam sem revisão da Meta porque só
+ * publicamos em contas que a Zenko administra.
+ */
 
-const REDES = [
-  { nome: 'Instagram', Icon: IconInstagram, aviso: 'Aqui abriria o login oficial do Instagram (via Meta).' },
-  { nome: 'Facebook', Icon: IconFacebook, aviso: 'Aqui abriria o login oficial do Facebook (via Meta).' },
-  { nome: 'TikTok', Icon: IconTikTok, aviso: 'Aqui abriria o login oficial do TikTok.' },
-];
+const REDES = {
+  instagram: { Icon: IconInstagram, rotulo: 'Instagram · conta profissional' },
+  facebook: { Icon: IconFacebook, rotulo: 'Facebook · Página' },
+};
 
 export default function Contas() {
   const toast = useToast();
+  const params = useSearchParams();
+
+  const [contas, setContas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    const erro = params.get('erro');
+    const ok = params.get('ok');
+    if (erro) toast(erro);
+    if (ok) toast(`${ok} conta(s) conectada(s).`);
+
+    fetch('/api/contas')
+      .then((r) => r.json())
+      .then(({ contas: lista = [] }) => setContas(lista))
+      .catch(() => toast('Não consegui carregar as contas.'))
+      .finally(() => setCarregando(false));
+  }, [params, toast]);
 
   return (
     <section aria-labelledby="h-contas">
@@ -30,44 +50,65 @@ export default function Contas() {
         <div className="card-head">
           <h2>
             Canais conectados{' '}
-            <span style={{ color: 'var(--muted)', fontWeight: 400 }}>· {CONECTADAS.length}</span>
+            <span style={{ color: 'var(--muted)', fontWeight: 400 }}>· {contas.length}</span>
           </h2>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {CONECTADAS.map(({ sigla, nome, rede, estado, rotulo, acao }) => (
-            <div className="acct-card" key={nome}>
-              <span className="av" aria-hidden="true">{sigla}</span>
-              <span className="info">
-                <b>{nome}</b>
-                <span>{rede}</span>
-              </span>
-              <span className={`badge ${estado === 'ok' ? 'b-ok' : 'b-warn'}`} style={{ marginRight: 8 }}>
-                <span className="dt" aria-hidden="true" />
-                {rotulo}
-              </span>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => toast(`${acao}: ${nome} (simulação).`)}
-              >
-                {acao}
-                <span className="vh"> a conta {nome}</span>
-              </button>
-            </div>
-          ))}
+        <div aria-live="polite" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {carregando && <p style={{ color: 'var(--muted)' }}>Carregando contas…</p>}
+
+          {!carregando && contas.length === 0 && (
+            <p style={{ color: 'var(--muted)' }}>
+              Nenhuma conta conectada. Use os botões abaixo para conectar.
+            </p>
+          )}
+
+          {contas.map((c) => {
+            const rede = REDES[c.rede] ?? {};
+            const precisaReconectar = c.estado !== 'ok';
+
+            return (
+              <div className="acct-card" key={c.id}>
+                <span className="av" aria-hidden="true">{c.sigla}</span>
+                <span className="info">
+                  <b>{c.usuario || c.nome_exibicao}</b>
+                  <span>{rede.rotulo || c.rede}</span>
+                </span>
+                <span
+                  className={`badge ${precisaReconectar ? 'b-warn' : 'b-ok'}`}
+                  style={{ marginRight: 8 }}
+                >
+                  <span className="dt" aria-hidden="true" />
+                  {precisaReconectar ? 'Reautenticar' : 'Conectada'}
+                </span>
+                <a className="btn btn--ghost btn--sm" href="/api/meta/conectar">
+                  {precisaReconectar ? 'Reconectar' : 'Gerenciar'}
+                  <span className="vh"> a conta {c.usuario || c.nome_exibicao}</span>
+                </a>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       <div className="card">
         <div className="card-head"><h2>Conectar nova conta</h2></div>
+
+        <p className="card-sub">
+          Um login só traz as Páginas do Facebook e as contas profissionais do Instagram
+          ligadas a elas. A conta do Instagram precisa ser <b>profissional</b> e estar
+          <b> vinculada a uma Página</b> — sem isso a Meta não libera a publicação.
+        </p>
+
         <div className="connect-grid">
-          {REDES.map(({ nome, Icon, aviso }) => (
-            <button type="button" className="connect-btn" key={nome} onClick={() => toast(aviso)}>
-              <span className="lg" aria-hidden="true"><Icon /></span>
-              {nome}
-            </button>
-          ))}
+          <a className="connect-btn" href="/api/meta/conectar">
+            <span className="lg" aria-hidden="true"><IconInstagram /></span>
+            Instagram
+          </a>
+          <a className="connect-btn" href="/api/meta/conectar">
+            <span className="lg" aria-hidden="true"><IconFacebook /></span>
+            Facebook
+          </a>
         </div>
       </div>
     </section>

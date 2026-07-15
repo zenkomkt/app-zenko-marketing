@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { criarClienteNavegador } from '@/lib/supabase/navegador';
 import { useToast } from './ToastProvider';
 import {
   LogoZ, IconGrid, IconUpload, IconLayers, IconCalendar,
@@ -38,6 +39,21 @@ export default function AppShell({ children }) {
   const firstRender = useRef(true);
 
   const close = useCallback(() => setOpen(false), []);
+
+   const [perfil, setPerfil] = useState(null);
+
+  useEffect(() => {
+    const sb = criarClienteNavegador();
+    sb.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data: p } = await sb.from('perfis').select('nome, papel').eq('id', user.id).single();
+      setPerfil({
+        nome: p?.nome || user.email.split('@')[0],
+        papel: (p?.papel || 'leitor').toUpperCase(),
+        inicial: (p?.nome || user.email)[0].toUpperCase(),
+      });
+    });
+  }, []);
 
   // Ao trocar de rota: fecha o menu e leva o foco para o conteúdo.
   // (Sem isso, quem navega por teclado ou leitor de tela ficaria "preso" no menu.)
@@ -106,10 +122,10 @@ export default function AppShell({ children }) {
           </nav>
 
           <div className="side-user">
-            <span className="avatar" aria-hidden="true">MV</span>
+            <span className="avatar" aria-hidden="true">{perfil?.inicial ?? '·'}</span>
             <span className="who">
-              <span className="nm">Matheus Vinicius</span>
-              <span className="rl">ADMIN · ZENKO</span>
+              <span className="nm">{perfil?.nome ?? 'Carregando…'}</span>
+              <span className="rl">{perfil ? `${perfil.papel} · ZENKO` : ''}</span>
             </span>
           </div>
         </aside>
